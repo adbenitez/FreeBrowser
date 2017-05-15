@@ -1,0 +1,7 @@
+Main-Class: view.Main
+Class-Path: 
+  assets/language/
+  assets/lib/javax.mail-1.5.6.jar
+  assets/lib/zip4j_1.3.2.jar
+  assets/lib/jNotifyOSD.jar 
+
