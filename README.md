@@ -5,7 +5,7 @@ to <a href="http://tek.sourceforge.net">TEK browser</a>,
 but much more simple(it is only a client)
 and can be configured to easily use any service like
 web2mail or webpage-grabber.
-This program was made for people with limited or restricted
+This program was made for people with limited or without
 Internet access that have an email account, it can be
 useful too for people from some countries that are blocked
 by some sites (ex. some google pages show a broken robot for
@@ -14,7 +14,27 @@ Internet access.
 <br/>
 <b>Note:</b> most the time the providers of the services in
 which this program relies will be in other country so your
-email account must to be able of send emails to that countries.
+email account must to be able of send emails to that country.
+
+<h1>How to use it</h1>
+This program requires java 1.5 or newer to work, and relies
+in a browser to show web pages.
+Before to start browsing you must go to Edit/Preferences
+menu and configure your mail settings, set your browser path
+and configure the service of retrieving web pages.
+After that, to visit some site: "http://example.com" you must
+to paste that url in the first text field (the larger) and
+press enter key.
+To search for something in a search engine type in the second
+text field (the smaller) and press enter key.
+You can Drag and Drop the program is window by pressing in
+the empty space of the window.
+The program will write a log file, with useful information
+about the program state, in the assets folder.
+If your mail host, or your service provider is slow,
+you can go to Tools/Games and play some HTML5 game while you
+wait for your web pages to be retrieved, the time will fly :-)
+
 <h1>How can I help?</h1>
 If you have internet access you can help other people
 by setting up a service like:
