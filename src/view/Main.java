@@ -32,6 +32,7 @@ import java.net.URLEncoder;
 import java.util.Arrays;
 
 import javax.mail.MessagingException;
+import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -105,7 +106,6 @@ public class Main extends JFrame {
         GraphicsEnvironment ge =
             GraphicsEnvironment.getLocalGraphicsEnvironment();
         gDevice = ge.getDefaultScreenDevice();
-        setJMenuBar(get_menuBar());
         setContentPane(get_panel());
         mManager.addMailListener(new MailListener() {
                 public void newMailReceived(MailEvent evt) {
@@ -223,14 +223,17 @@ public class Main extends JFrame {
             panel = new JPanel(new GridBagLayout());
             GridBagConstraints c = new GridBagConstraints();
             c.fill = GridBagConstraints.HORIZONTAL;
-
-            c.gridy = 0; c.gridx = 0; c.weightx = 1; c.gridwidth = 2;
-            c.insets = new Insets(0, 0, 0, 5);//top, left, bott, right
+            c.gridy = 0; c.gridx = 0; 
+            panel.add(get_menuBar(), c);
+            c.gridy = 1; c.gridx = 0; c.weightx = 1; c.gridwidth = 2;
+            c.insets = new Insets(0, 0, 0, 10);//top, left, bott, right
             panel.add(getBrowseTF(), c);
 
             c.gridx = 2; c.weightx = 0; c.gridwidth = 1;
             c.insets = new Insets(0, 0, 0, 0);
             panel.add(getSearchTF(), c);
+
+            panel.setBorder(BorderFactory.createRaisedBevelBorder());
         }
         return panel;
     }
@@ -375,6 +378,8 @@ public class Main extends JFrame {
 
     //	====================== END METHODS =======================
 
+    //	========================= MAIN ===========================
+    
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -394,4 +399,5 @@ public class Main extends JFrame {
             });
     }
 
+    //	======================= END MAIN =========================
 }

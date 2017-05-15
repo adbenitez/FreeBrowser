@@ -269,16 +269,7 @@ public class PManager {
         setSenderFrom(email);
         setReceiverFrom(email);
     }
-    
-    public String getHost() {
-        return getSenderHost();
-    }
-
-    public void setHost(String host) {
-        setSenderHost(host);
-        setReceiverHost(host);
-    }
-    
+        
     public boolean getStartTLS() { 
         return getSenderStartTLS();
     }
@@ -350,7 +341,7 @@ public class PManager {
         p.setProperty(SENDER_STARTTLS, Boolean.toString(getSenderStartTLS()));
         p.setProperty(SENDER_SSL, Boolean.toString(getSSL()));
         p.setProperty("mail.smtp.ssl.trust", "*");
-        p.setProperty(SENDER_HOST, getHost());
+        p.setProperty(SENDER_HOST, getSenderHost());
         p.setProperty(SENDER_PORT, getSenderPort());
         p.setProperty(SENDER_FROM, getSenderFrom());
         p.setProperty(SENDER_AUTH, "true");
@@ -376,7 +367,7 @@ public class PManager {
         p.setProperty(RECEIVER_STARTTLS, Boolean.toString(getReceiverStartTLS()));
         p.setProperty(RECEIVER_SSL, Boolean.toString(getSSL()));
         p.setProperty("mail."+getReceiverProtocol()+".ssl.trust", "*");
-        p.setProperty(RECEIVER_HOST, getHost());
+        p.setProperty(RECEIVER_HOST, getReceiverHost());
         p.setProperty(RECEIVER_PORT, getReceiverPort());
         p.setProperty(RECEIVER_AUTH, "true");
         p.setProperty(RECEIVER_USER, getUser());

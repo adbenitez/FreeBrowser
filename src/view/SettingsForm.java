@@ -67,8 +67,9 @@ public class SettingsForm extends JDialog {
     private JPanel mailPanel;
     private JComboBox<String> sslComb;
     private JComboBox<String> protocolComb;
-    private JTextField hostTF;
-    private JTextField smtpPortTF;
+    private JTextField senderHostTF;
+    private JTextField senderPortTF;
+    private JTextField receiverHostTF;
     private JTextField receiverPortTF;
     private JTextField emailTF;
     private JPasswordField passPF;
@@ -303,18 +304,20 @@ public class SettingsForm extends JDialog {
             c.gridy = 1;
             mailPanel.add(new JLabel(R.getString("sett.protocol")), c);
             c.gridy = 2;
-            mailPanel.add(new JLabel(R.getString("sett.host")), c);
+            mailPanel.add(new JLabel(R.getString("sett.sender-host")), c);
             c.gridy = 3;
-            mailPanel.add(new JLabel(R.getString("sett.smtp-port")), c);
+            mailPanel.add(new JLabel(R.getString("sett.sender-port")), c);
             c.gridy = 4;
-            mailPanel.add(new JLabel(R.getString("sett.receiver-port")), c);
+            mailPanel.add(new JLabel(R.getString("sett.receiver-host")), c);
             c.gridy = 5;
-            mailPanel.add(new JLabel(R.getString("sett.email")), c);
+            mailPanel.add(new JLabel(R.getString("sett.receiver-port")), c);
             c.gridy = 6;
-            mailPanel.add(new JLabel(R.getString("sett.pass")), c);
+            mailPanel.add(new JLabel(R.getString("sett.email")), c);
             c.gridy = 7;
-            mailPanel.add(new JLabel(R.getString("sett.folder")), c);
+            mailPanel.add(new JLabel(R.getString("sett.pass")), c);
             c.gridy = 8;
+            mailPanel.add(new JLabel(R.getString("sett.folder")), c);
+            c.gridy = 9;
             mailPanel.add(new JLabel(R.getString("sett.action")), c);
 
             c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1;
@@ -325,21 +328,23 @@ public class SettingsForm extends JDialog {
             c.gridy = 1;
             mailPanel.add(get_protocolComb(), c);
             c.gridy = 2;
-            mailPanel.add(get_hostTF(), c);
+            mailPanel.add(get_senderHostTF(), c);
             c.gridy = 3;
-            mailPanel.add(get_smtpPortTF(), c);
+            mailPanel.add(get_senderPortTF(), c);
             c.gridy = 4;
-            mailPanel.add(get_receiverPortTF(), c);
+            mailPanel.add(get_receiverHostTF(), c);
             c.gridy = 5;
-            mailPanel.add(get_emailTF(), c);
+            mailPanel.add(get_receiverPortTF(), c);
             c.gridy = 6;
-            mailPanel.add(get_passPF(), c);
+            mailPanel.add(get_emailTF(), c);
             c.gridy = 7;
-            mailPanel.add(get_inboxTF(), c);
+            mailPanel.add(get_passPF(), c);
             c.gridy = 8;
+            mailPanel.add(get_inboxTF(), c);
+            c.gridy = 9;
             mailPanel.add(get_receiverAction_comb(), c);
 
-            c.gridy = 9; c.weighty = 1;
+            c.gridy = 10; c.weighty = 1;
             c.fill = GridBagConstraints.VERTICAL;
             mailPanel.add(Box.createVerticalGlue(), c);
         }
@@ -374,18 +379,25 @@ public class SettingsForm extends JDialog {
         return protocolComb;
     }
 
-    private JTextField get_hostTF() {
-        if (hostTF == null) {
-            hostTF = new JTextField(pManager.getHost());
+    private JTextField get_senderHostTF() {
+        if (senderHostTF == null) {
+            senderHostTF = new JTextField(pManager.getSenderHost());
         }
-        return hostTF;
+        return senderHostTF;
     }
 
-    private JTextField get_smtpPortTF() {
-        if (smtpPortTF == null) {
-            smtpPortTF = new JTextField(pManager.getSenderPort());
+    private JTextField get_receiverHostTF() {
+        if (receiverHostTF == null) {
+            receiverHostTF = new JTextField(pManager.getReceiverHost());
         }
-        return smtpPortTF;
+        return receiverHostTF;
+    }
+    
+    private JTextField get_senderPortTF() {
+        if (senderPortTF == null) {
+            senderPortTF = new JTextField(pManager.getSenderPort());
+        }
+        return senderPortTF;
     }
 
     private JTextField get_receiverPortTF() {
@@ -463,8 +475,9 @@ public class SettingsForm extends JDialog {
                         boolean ssl = sslStr.equals(R.getString("sett.cbox.ssl"));
                         boolean starttls = sslStr.equals(R.getString("sett.cbox.tls"));
                         String protocol = ((String)protocolComb.getSelectedItem()).toLowerCase();
-                        String host = hostTF.getText().trim();
-                        String smtpPort = smtpPortTF.getText().trim();
+                        String senderHost = senderHostTF.getText().trim();
+                        String senderPort = senderPortTF.getText().trim();
+                        String receiverHost = receiverHostTF.getText().trim();
                         String recPort = receiverPortTF.getText().trim();
                         String email = emailTF.getText().trim();
                         String pass = new String(passPF.getPassword());
@@ -474,8 +487,9 @@ public class SettingsForm extends JDialog {
                         pManager.setStartTLS(starttls);
                         pManager.setSSL(ssl);
                         pManager.setReceiverProtocol(protocol);
-                        pManager.setHost(host);
-                        pManager.setSenderPort(smtpPort);
+                        pManager.setSenderHost(senderHost);
+                        pManager.setSenderPort(senderPort);
+                        pManager.setReceiverHost(receiverHost);
                         pManager.setReceiverPort(recPort);
                         pManager.setEmail(email);
                         pManager.setPassword(pass);
