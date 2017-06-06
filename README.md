@@ -12,7 +12,7 @@ to be able of send emails to that country.
 
 # How to use it
 
-This program requires java 1.5 or newer to work, and relies in a browser to show web pages.
+This program requires java 1.6 or newer to work, and relies in a browser to show web pages.
 Before to start browsing you must go to Edit/Preferences menu and configure your mail settings, set your browser path (if you don't want
 to use system is default browser) and configure the service of retrieving web pages (if you don't want to use default provider)
 After that, to visit some site: "http://example.com" you must to paste that url in the left text field (the larger) and press enter key.
