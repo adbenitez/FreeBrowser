@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 2017 Asiel Díaz Benítez.
- * 
+ *
  * This file is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * You should have received a copy of the GNU General Public License
  * along with this file.  If not, see <http://www.gnu.org/licenses/>.
- *  
+ *
  */
 
 package controller;
@@ -18,23 +18,24 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.net.URI;
 import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.Properties;
+import java.text.MessageFormat;
 
 public class PManager {
-    
+
     //	================= ATTRIBUTES ==============================
 
     private static PManager pManager;
-    
+
     public String program_name;
     private String user_name;
-    
+
     private Properties prefs;
     private String program_path;
-    private PrintStream log_stream;    
-    
+    private PrintStream log_stream;
+
+    private final String SEPARATOR;
+
     private final String FIRST_TIME = "prefs.fisttime";
     private final String OPACITY = "prefs.opacity";
     private final String ALWAYS_ON_TOP = "prefs.alwaysontop";
@@ -63,28 +64,29 @@ public class PManager {
     private final String RECEIVE_FOLDER = "prefs.receiver.folder";
     private final String RECEIVER_INBOX = "prefs.receiver.inbox";
     private final String RECEIVER_ACTION = "prefs.receiver.action";
-    
-    private String errorPage;
+
     private String helpPage;
+    private String aboutPage;
     private String gamesPage;
     private boolean debug;
-    
+
     //	================= END ATTRIBUTES ==========================
-    
+
     //	================= CONSTRUCTORS ===========================
-    
+
     private PManager () {
         debug = false;
+        SEPARATOR = File.separator;
         program_name = R.getString("app.name");
         user_name = System.getProperty("user.name");
         prefs = get_Program_Properties();
-        
+
     }
-    
+
     //	================= END CONSTRUCTORS =======================
-    
+
     //	===================== METHODS ============================
-    
+
     public void writeLog(String log) {
         if (getDebug()) {
             System.out.println(log);
@@ -93,31 +95,29 @@ public class PManager {
             }
         }
     }
-    
+
     public void writeLog(Exception ex) {
         if (getDebug()) {
             System.out.println(ex.getMessage());
             if (log_stream != null) {
                 ex.printStackTrace(log_stream);
-            }                
+            }
         }
     }
-    
+
     public String get_Log_File_Path() {
         return Paths.get(getAssetsPath(), program_name + ".log").toString();
     }
-    
+
     private void open_Log_Stream() {
-        try { 
+        try {
             File file = new File(get_Log_File_Path());
             double size = file.length() / 1024; // KB
             FileOutputStream os = new FileOutputStream(file, (size <= 1024));
             log_stream = new PrintStream(os, true);
             if (getDebug()) {
                 log_stream.println("============== "
-                                   + R.getString("pm.prog-started") 
-                                   + " " + LocalDate.now() + " "
-                                   + LocalTime.now()
+                                   + R.getString("pm.prog-started")
                                    + " ==============");
             }
         } catch (Exception ex) {
@@ -125,26 +125,24 @@ public class PManager {
             ex.printStackTrace();
         }
     }
-    
+
     public void close_Log_Stream() {
         if (log_stream != null) {
             if (getDebug()) {
                 log_stream.println("============== "
-                                   + R.getString("pm.prog-closed") 
-                                   + " " + LocalDate.now() + " "
-                                   + LocalTime.now()
+                                   + R.getString("pm.prog-closed")
                                    + " ==============");
             }
             log_stream.close();
         }
     }
-    
+
     private Properties get_Program_Properties() {
         if (prefs == null) {
             try {
-                URI uri = PManager.class.getProtectionDomain().getCodeSource().getLocation().toURI(); 
+                URI uri = PManager.class.getProtectionDomain().getCodeSource().getLocation().toURI();
                 program_path = Paths.get(uri).getParent().toString();
-                
+
                 prefs = new Properties();
                 File f = Paths.get(getAssetsPath(), program_name
                                    +R.getString("pm.config-ext")).toFile();
@@ -173,23 +171,31 @@ public class PManager {
 
     public String getHelpPage() {
         if (helpPage == null) {
-            helpPage = Paths.get(getAssetsPath(), R.getString("pm.help-dir"), R.getString("pm.help-page")).toUri().toString();
+            String helpDir = MessageFormat.format(R.getString("pm.help-dir"), SEPARATOR);
+            helpPage = R.getString("pm.help-page");
+            helpPage = Paths.get(getAssetsPath(), helpDir, helpPage).toUri().toString();
         }
         return helpPage;
     }
 
     public String getGamesPage() {
         if (gamesPage == null) {
-            gamesPage = Paths.get(getAssetsPath(), R.getString("pm.games-dir"), R.getString("pm.games-page")).toUri().toString();
+            String gamesDir = MessageFormat.format(R.getString("pm.games-dir"), SEPARATOR);
+            gamesPage = R.getString("pm.games-page");
+            gamesPage = Paths.get(getAssetsPath(), gamesDir, gamesPage).toUri().toString();
         }
         return gamesPage;
     }
 
     public String getAboutPage() {
-        String aboutPage = Paths.get(getAssetsPath(), R.getString("pm.about-dir"), R.getString("pm.about-page")).toUri().toString();
+        if (aboutPage == null) {
+            String aboutDir = MessageFormat.format(R.getString("pm.about-dir"), SEPARATOR);
+            aboutPage = R.getString("pm.about-page");
+            aboutPage = Paths.get(getAssetsPath(), aboutDir, aboutPage).toUri().toString();
+        }
         return aboutPage;
     }
-    
+
     public void save_Config() {
         try {
             File f = Paths.get(getAssetsPath(), program_name+R.getString("pm.config-ext")).toFile();
@@ -219,7 +225,7 @@ public class PManager {
 
     // ------------------------
 
-    public boolean useExternalBrowser() {        
+    public boolean useExternalBrowser() {
         return Boolean.parseBoolean(prefs.getProperty(USE_EXT_BROWSER, "true"));
     }
 
@@ -230,7 +236,7 @@ public class PManager {
     public void setOpacity(float op) {
         prefs.setProperty(OPACITY, Float.toString(op));
     }
-    
+
     public void useExternalBrowser(boolean status) {
         prefs.setProperty(USE_EXT_BROWSER, Boolean.toString(status));
     }
@@ -242,7 +248,7 @@ public class PManager {
     public String getExternalBrowser() {
         return prefs.getProperty(EXTERNAL_BROWSER, R.getString("pm.browser"));
     }
-    
+
     public String getUser() {
         return getSenderUser();
     }
@@ -260,7 +266,7 @@ public class PManager {
         setSenderPass(password);
         setReceiverPass(password);
     }
-    
+
     public String getEmail() {
         return getSenderFrom();
     }
@@ -269,8 +275,8 @@ public class PManager {
         setSenderFrom(email);
         setReceiverFrom(email);
     }
-        
-    public boolean getStartTLS() { 
+
+    public boolean getStartTLS() {
         return getSenderStartTLS();
     }
 
@@ -284,7 +290,7 @@ public class PManager {
         setReceiverSSL(enabled);
     }
 
-    public boolean getSSL() {        
+    public boolean getSSL() {
         return getSenderSSL();
     }
 
@@ -303,7 +309,7 @@ public class PManager {
     public String getBrowseBot() {
         return prefs.getProperty(BROWSE_BOT, R.getString("pm.browse-bot"));
     }
-    
+
     public void setSearchCmd(String cmd) {
         prefs.setProperty(SEARCH_CMD, cmd);
     }
@@ -319,8 +325,8 @@ public class PManager {
     public String getSearchBot() {
         return prefs.getProperty(SEARCH_BOT, R.getString("pm.search-bot"));
     }
-    
-    public boolean getAlwaysOnTop() {  
+
+    public boolean getAlwaysOnTop() {
         return Boolean.parseBoolean(prefs.getProperty(ALWAYS_ON_TOP, "true"));
     }
 
@@ -328,16 +334,16 @@ public class PManager {
         prefs.setProperty(ALWAYS_ON_TOP, Boolean.toString(enabled));
     }
 
-    public boolean getDebug() {  
+    public boolean getDebug() {
         return Boolean.parseBoolean(prefs.getProperty(DEBUG, "true"));
     }
 
     public void setDebug(boolean enabled) {
         prefs.setProperty(DEBUG, Boolean.toString(enabled));
     }
-    
+
     public Properties getSenderProps() {
-        Properties p = new Properties();      
+        Properties p = new Properties();
         p.setProperty(SENDER_STARTTLS, Boolean.toString(getSenderStartTLS()));
         p.setProperty(SENDER_SSL, Boolean.toString(getSSL()));
         p.setProperty("mail.smtp.ssl.trust", "*");
@@ -349,7 +355,7 @@ public class PManager {
         p.setProperty(SENDER_PASS, getPassword());
         p.setProperty(SENDER_TIMEOUT, Integer.toString(getSenderTimeout()));
         p.setProperty(DEBUG, Boolean.toString(getDebug()&& debug));
-        
+
         return p;
     }
 
@@ -363,7 +369,7 @@ public class PManager {
         String RECEIVER_USER = "mail."+getReceiverProtocol()+".user";
         String RECEIVER_PASS = "mail."+getReceiverProtocol()+".pass";
         String RECEIVER_TIMEOUT = "mail."+getReceiverProtocol()+".connectiontimeout";
-        
+
         p.setProperty(RECEIVER_STARTTLS, Boolean.toString(getReceiverStartTLS()));
         p.setProperty(RECEIVER_SSL, Boolean.toString(getSSL()));
         p.setProperty("mail."+getReceiverProtocol()+".ssl.trust", "*");
@@ -377,15 +383,15 @@ public class PManager {
         return p;
     }
 
-    public String getSenderProtocol() {        
+    public String getSenderProtocol() {
         return prefs.getProperty(SENDER_PROTOCOL, "smtp");
     }
 
     public void setSenderProtocol(String protocol) {
         prefs.setProperty(SENDER_PROTOCOL, protocol);
     }
-    
-    public boolean getSenderStartTLS() { 
+
+    public boolean getSenderStartTLS() {
         return Boolean.parseBoolean(prefs.getProperty(SENDER_STARTTLS, "false"));
     }
 
@@ -397,11 +403,11 @@ public class PManager {
         prefs.setProperty(SENDER_SSL, Boolean.toString(enabled));
     }
 
-    public boolean getSenderSSL() {        
+    public boolean getSenderSSL() {
         return Boolean.parseBoolean(prefs.getProperty(SENDER_SSL, "true"));
     }
 
-    public String getSenderHost() {        
+    public String getSenderHost() {
         return prefs.getProperty(SENDER_HOST, R.getString("pm.smtp-host"));
     }
 
@@ -409,7 +415,7 @@ public class PManager {
         prefs.setProperty(SENDER_HOST, host);
     }
 
-    public String getSenderPort() {        
+    public String getSenderPort() {
         return prefs.getProperty(SENDER_PORT, R.getString("pm.smtp-port"));
     }
 
@@ -417,7 +423,7 @@ public class PManager {
         prefs.setProperty(SENDER_PORT, port);
     }
 
-    public String getSenderFrom() {        
+    public String getSenderFrom() {
         return prefs.getProperty(SENDER_FROM, user_name+R.getString("pm.dom"));
     }
 
@@ -426,7 +432,7 @@ public class PManager {
         prefs.setProperty(SENDER_USER, getUser(email));
     }
 
-    public boolean getSenderAuth() {        
+    public boolean getSenderAuth() {
         return Boolean.parseBoolean(prefs.getProperty(SENDER_AUTH, "true"));
     }
 
@@ -434,7 +440,7 @@ public class PManager {
         prefs.setProperty(SENDER_AUTH, Boolean.toString(enabled));
     }
 
-    public String getSenderUser() {        
+    public String getSenderUser() {
         return prefs.getProperty(SENDER_USER, user_name);
     }
 
@@ -442,7 +448,7 @@ public class PManager {
         prefs.setProperty(SENDER_USER, user);
     }
 
-    public String getSenderPass() {        
+    public String getSenderPass() {
         return prefs.getProperty(SENDER_PASS, "");
     }
 
@@ -458,7 +464,7 @@ public class PManager {
         setSenderTimeout(timeout);
         setReceiverTimeout(timeout);
     }
-   
+
     private int getSenderTimeout() {
         return Integer.parseInt(prefs.getProperty(SENDER_TIMEOUT, "-1"));
     }
@@ -467,7 +473,7 @@ public class PManager {
         prefs.setProperty(SENDER_TIMEOUT, Integer.toString(timeout));
     }
 
-    public String getReceiveFrom() {        
+    public String getReceiveFrom() {
         return prefs.getProperty(RECEIVE_FROM, R.getString("pm.browse-bot"));
     }
 
@@ -483,7 +489,7 @@ public class PManager {
         prefs.setProperty(RECEIVE_FOLDER, folder);
     }
 
-    public String getReceiverINBOX() {        
+    public String getReceiverINBOX() {
         return prefs.getProperty(RECEIVER_INBOX, R.getString("pm.inbox"));
     }
 
@@ -491,7 +497,7 @@ public class PManager {
         prefs.setProperty(RECEIVER_INBOX, folder);
     }
 
-    public int getReceiverAction() {        
+    public int getReceiverAction() {
         return Integer.parseInt(prefs.getProperty(RECEIVER_ACTION, "1"));
     }
 
@@ -507,7 +513,7 @@ public class PManager {
     public void setReceiverProtocol(String type) {
         prefs.setProperty(RECEIVER_PROTOCOL, type);
     }
-    
+
     public boolean getReceiverStartTLS() {
         String RECEIVER_STARTTLS = "mail."+getReceiverProtocol()+".starttls.enable";
         return Boolean.parseBoolean(prefs.getProperty(RECEIVER_STARTTLS, "false"));
@@ -583,7 +589,7 @@ public class PManager {
     private void setReceiverTimeout(int timeout) {
         String RECEIVER_TIMEOUT = "mail."+getReceiverProtocol()+".connectiontimeout";
         prefs.setProperty(RECEIVER_TIMEOUT, Integer.toString(timeout));
-    }    
+    }
 
     private String getUser(String email) {
         int i = 0;
@@ -606,7 +612,7 @@ public class PManager {
         }
         return pManager;
     }
-    
+
     //	====================== END METHODS =======================
-    
+
 }

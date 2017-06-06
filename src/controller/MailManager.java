@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 2017 Asiel Díaz Benítez.
- * 
+ *
  * This file is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * You should have received a copy of the GNU General Public License
  * along with this file.  If not, see <http://www.gnu.org/licenses/>.
- *  
+ *
  */
 
 package controller;
@@ -54,9 +54,9 @@ import controller.event.MailListener;
 import controller.exception.InvalidFolderException;
 
 public class MailManager {
-    
+
     //	================= ATTRIBUTES ==============================
-    
+
     private static MailManager mManager;
 
     private PManager pManager;
@@ -69,26 +69,26 @@ public class MailManager {
     private LinkedList<MailListener> mailListeners;
 
     private Thread receiverThr;
-    
+
     //	================= END ATTRIBUTES ==========================
-    
+
     //	================= CONSTRUCTORS ===========================
-    
+
     private MailManager () {
         pManager = PManager.getInstance();
         mailListeners = new LinkedList<MailListener>();
         Security.addProvider(new Provider());
     }
-    
+
     //	================= END CONSTRUCTORS =======================
-    
+
     //	===================== METHODS ============================
 
     public void addMailListener(MailListener ml) {
         mailListeners.add(ml);
     }
 
-    public void notifyMailListeners(String attachment) {
+    public void notifyMailListeners(File attachment) {
         MailEvent evt = new MailEvent(this, attachment);
         for (MailListener ml : mailListeners) {
             ml.newMailReceived(evt);
@@ -101,7 +101,7 @@ public class MailManager {
             ml.errorOccurred(evt);
         }
     }
-    
+
     public void startReceiver() {
         stopReceiver();
         receiverThr = new Thread() {
@@ -121,7 +121,7 @@ public class MailManager {
                         } catch (InvalidFolderException e) {
                             notifyErrorListeners(e);
                         }
-                        
+
                         try {
                             sleep(10000);
                         } catch (InterruptedException e) {/* ignore */}
@@ -138,7 +138,7 @@ public class MailManager {
             receiverThr = null;
         }
     }
-    
+
     public void sendMail(String to, String subj, String body) throws MessagingException {
         if(transport == null || !transport.isConnected()) {
             senderConnect();
@@ -150,7 +150,7 @@ public class MailManager {
         message.setText(body);
         transport.sendMessage(message, message.getAllRecipients());
     }
-    
+
     public void senderConnect() throws NoSuchProviderException, MessagingException {
         String msg = MessageFormat.format(R.getString("mm.connecting"), "SMTP");
         pManager.writeLog(msg);
@@ -170,7 +170,7 @@ public class MailManager {
         String prot = pManager.getReceiverProtocol().toUpperCase();
         String msg = MessageFormat.format(R.getString("mm.connecting"), prot);
         pManager.writeLog(msg);
-        
+
         if (store != null) {
             try {
                 store.close();
@@ -182,7 +182,7 @@ public class MailManager {
         msg = MessageFormat.format(R.getString("mm.connected"), prot);
         pManager.writeLog(msg);
     }
-    
+
     public synchronized void receiveMails() throws MessagingException, IOException, InvalidFolderException {
         if (store == null || !store.isConnected()) {
             receiverConnect();
@@ -194,6 +194,7 @@ public class MailManager {
             throw new InvalidFolderException(msg);
         }
         folder.open(Folder.READ_WRITE);
+        // TODO: handle multiple bots: bot1@e.com,bot2@e.com
         SearchTerm term = new FromStringTerm(pManager.getBrowseBot());
         FromStringTerm sBot = new FromStringTerm(pManager.getSearchBot());
         FlagTerm flagTerm = new FlagTerm(new Flags(Flags.Flag.SEEN), false);
@@ -204,9 +205,7 @@ public class MailManager {
         fp.add(FetchProfile.Item.ENVELOPE);
         fp.add(FetchProfile.Item.CONTENT_INFO);
         folder.fetch(msgs, fp);
-        if (msgs.length > 0) {
-        
-        } else {
+        if (msgs.length <= 0) {
             pManager.writeLog(R.getString("mm.no-new-msg"));
         }
         int i = 1;
@@ -214,9 +213,9 @@ public class MailManager {
         for(Message m : msgs) {
             String msg = MessageFormat.format(R.getString("mm.receiving"), i++, len);
             pManager.writeLog(msg);
-            String attachPath = receiveMultipartMessage(m, pManager.getDownloadsPath());
-            if (attachPath != null) {
-                notifyMailListeners(attachPath);
+            File attach = receiveMultipartMessage(m, pManager.getDownloadsPath());
+            if (attach != null) {
+                notifyMailListeners(attach);
             } else {
                 pManager.writeLog(R.getString("mm.null-attach"));
             }
@@ -229,14 +228,14 @@ public class MailManager {
             pManager.writeLog(ex);
         }
     }
-    
-    private String receiveMultipartMessage(Message m, String dir)
+
+    private File receiveMultipartMessage(Message m, String dir)
         throws IOException, MessagingException {
         File directory = new File(dir);
         File attach = null;
         String subj = m.getSubject();
         if (subj.startsWith("Re: webpage ")) {
-            subj = subj.substring(12, subj.length());
+            subj = subj.substring(12);
         }
         subj = subj.replace("/", "_").replace(":", "_").replace("?", "_").replace("*", "_").replace("\\", "_");
         int len = subj.length();
@@ -244,7 +243,7 @@ public class MailManager {
             len = 100;
         }
         subj = subj.substring(0, len);
-        
+
         if (!directory.exists()) {
             directory.mkdirs();
         }
@@ -254,7 +253,7 @@ public class MailManager {
         if (!folder.isOpen()) {
             folder.open(Folder.READ_WRITE);
         }
-        
+
         Object o = m.getContent();
         if (o instanceof Multipart) {
             Multipart mp = (Multipart) o;
@@ -269,10 +268,10 @@ public class MailManager {
             }
         } else if (o instanceof String) {
             attach = new File(dir, subj+".html");
-            PrintStream ps = new PrintStream(attach);    
+            PrintStream ps = new PrintStream(attach);
             String msg = MessageFormat.format(R.getString("mm.downloading"), subj);
             pManager.writeLog(msg);
-        
+
             if (m.getContentType().indexOf("text/html") >= 0) {
                 DataHandler dh = m.getDataHandler();
                 dh.writeTo(ps);
@@ -283,7 +282,7 @@ public class MailManager {
                 ps.println("</body>");
             }
             ps.close();
-            
+
             pManager.writeLog(R.getString("mm.downloaded"));
         } else if (o instanceof BASE64DecoderStream) {
             boolean isZip = m.getFileName().endsWith(".zip");
@@ -292,7 +291,7 @@ public class MailManager {
             String msg = MessageFormat.format(R.getString("mm.unknow-type"), o.getClass().toString());
             pManager.writeLog(msg);
         }
-        
+
         switch (pManager.getReceiverAction()) {
         case 0: //"mark as read"
             m.setFlag(Flags.Flag.SEEN, true);
@@ -301,7 +300,7 @@ public class MailManager {
             m.setFlag(Flags.Flag.DELETED, true);
             break;
         }
-        return attach != null? attach.getAbsolutePath() : null;
+        return attach;
     }
 
     private File download(Object attObj, String dir, String attName, boolean isZip) throws IOException, MessagingException {
@@ -309,12 +308,12 @@ public class MailManager {
         File attach = File.createTempFile("att", ".tmp");
         String msg = MessageFormat.format(R.getString("mm.downloading"), attName);
         pManager.writeLog(msg);
-        
+
         if(attObj instanceof MimeBodyPart) {
             ((MimeBodyPart) attObj).saveFile(attach);  // save in the temp file
         } else if (attObj instanceof BASE64DecoderStream) {
             InputStream base64_is = (InputStream) attObj;
-            PrintStream ps = new PrintStream(attach);    
+            PrintStream ps = new PrintStream(attach);
             int b;
             while ((b = base64_is.read()) >= 0) {
                 ps.write(b);
@@ -323,22 +322,22 @@ public class MailManager {
             ps.close();
         }
         pManager.writeLog(R.getString("mm.downloaded"));
-        
+
         if (isZip) {
             try {
                 pManager.writeLog(R.getString("mm.uncompressing"));
-            
+
                 ZipFile zipFile = new ZipFile(attach);
                 zipFile.extractAll(attachPath);
                 attach.delete();
                 attach = new File(attachPath);
-            
+
                 pManager.writeLog(R.getString("mm.uncompressed"));
             } catch (ZipException e) {
                 pManager.writeLog(e);
             }
         }
-    
+
         if (new File(dir, attName).exists()) { // if the folder exists
             for (int i = 2; i < Integer.MAX_VALUE; i++) {
                 String name = attName + "_" + i;
@@ -349,23 +348,17 @@ public class MailManager {
             }
         }
         attach = new File(Files.move(attach.toPath(), Paths.get(dir, attName)).toString());
-        if (attach.isDirectory()) {
-            File f = new File(attach.getAbsolutePath(), "index.html");
-            if (f.exists()) {
-                attach = f;
-            }
-        }
 
         return attach;
     }
-    
+
     public static MailManager getInstance() {
         if (mManager == null) {
             mManager = new MailManager();
         }
         return mManager;
     }
-    
+
     //	====================== END METHODS =======================
-    
+
 }

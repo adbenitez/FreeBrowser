@@ -13,6 +13,7 @@
 package view;
 
 import java.awt.Dimension;
+import java.awt.Desktop;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsDevice.WindowTranslucency;
 import java.awt.GraphicsEnvironment;
@@ -25,11 +26,17 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.io.PrintWriter;
+import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.text.MessageFormat;
 
 import javax.mail.MessagingException;
 import javax.swing.BorderFactory;
@@ -42,6 +49,7 @@ import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
+import javax.swing.JFileChooser;
 
 import adbenitez.notify.core.Notification;
 import controller.MailManager;
@@ -65,6 +73,7 @@ public class Main extends JFrame {
 
     private GraphicsDevice gDevice;
     private JMenuBar menuBar;
+    private JFileChooser fileChooser;
     private JPanel panel;
     private JTextField browseTF;
     private JTextField searchTF;
@@ -75,6 +84,7 @@ public class Main extends JFrame {
 
     private Main () {
         super();
+        Notification.setDefaultTheme(Notification.ThemeType.NONE);
         setUndecorated(true);
         setup();
         pack();
@@ -109,17 +119,18 @@ public class Main extends JFrame {
         setContentPane(get_panel());
         mManager.addMailListener(new MailListener() {
                 public void newMailReceived(MailEvent evt) {
-                    String attach = evt.getAttachmentPath();
+                    File attach = evt.getAttachment();
                     if (attach != null) {
-                        try {
-                            String url = new File(attach).toURI().toURL().toString();
-                            if (pManager.useExternalBrowser()) {
-                                addExternTab(url);
-                            } else {
-                                pManager.writeLog(R.getString("main.browser-disabled")); //$NON-NLS-1$
-                            }
-                        } catch (MalformedURLException e) {
-                            pManager.writeLog(e);
+                        String url;
+                        if (attach.isDirectory()) {
+                            url = createIndex(attach);
+                        } else {
+                             url = attach.toURI().toString();
+                        }
+                        if (pManager.useExternalBrowser()) {
+                            addExternTab(url);
+                        } else {
+                            pManager.writeLog(R.getString("main.browser-disabled")); //$NON-NLS-1$
                         }
                     }
                 }
@@ -135,9 +146,77 @@ public class Main extends JFrame {
         mManager.startReceiver();
     }
 
+    private String createIndex(File attach) {
+        File[] webPages = attach.listFiles(new FilenameFilter() {
+                public boolean accept(File f, String path) {
+                    path = path.toLowerCase();
+                    if (path.endsWith(".html") || path.endsWith(".htm")) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            });
+        int len = webPages.length;
+        if (len == 0) {
+            return attach.toURI().toString();
+        } else if (len == 1) {
+            return webPages[0].toURI().toString();
+        }
+        String attName = attach.getName();
+        String content = "<html><head>"
+            +"<title>" + attName + "</title>"
+            +"<style>"
+            +"html { padding-top:25px; background: #0074C9; }"
+            +"body { width:90%; padding: 20px; margin: 0px auto; background-color:#E1EDEB; box-shadow:10px 10px 10px rgba(0,0,0,.5); }"
+            +".button { background: #0074C9; text-decoration: none; color: white; padding: 10px; box-shadow:3px 3px 5px rgba(0,0,0,.5); }"
+            +".button:active { box-shadow:none; }"
+            +"</style>"
+            +"</head><body>"
+            +"<h2>" + MessageFormat.format(R.getString("main.index-banner"), attName) + "</h2>"
+            +"<ul>";
+        String name;
+        for (int i = 0; i < len; i++) {
+            name = webPages[i].getName();
+            content += "<li><a href=\"./" + name + "\">"+ name +"</a></li><br/>";
+        }
+        content += "</ul><br/><a class=\"button\" href=\"./\">"+ R.getString("main.show-all") +"</a></body></html>";
+
+        File indexFile = new File(attach, "__index__.html");
+        try {
+            PrintWriter pw = new PrintWriter(indexFile);
+            pw.print(content);
+            pw.flush();
+            pw.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("Error " + e.getMessage());
+            e.printStackTrace();
+        }
+        return indexFile.toURI().toString();
+    }
+
+    private JFileChooser getFileChooser() {
+        if (fileChooser == null) {
+            fileChooser = new JFileChooser(pManager.getDownloadsPath());
+        }
+        return fileChooser;
+    }
+
     private JMenuBar get_menuBar() {
         if (menuBar == null) {
             // ---- FILE -----------------
+            JMenuItem openMI = new JMenuItem(R.getString("main.open")); //$NON-NLS-1$
+            openMI.setMnemonic(R.getChar("main.open-nemonic"));
+            openMI.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent evt) {
+                        int retVal = getFileChooser().showOpenDialog(Main.this);
+                        if (retVal == JFileChooser.APPROVE_OPTION) {
+                            File f = getFileChooser().getSelectedFile();
+                            addExternTab(f.toURI().toString());
+                        }
+                    }
+                });
             JMenuItem minMI = new JMenuItem(R.getString("main.minimize")); //$NON-NLS-1$
             minMI.setMnemonic(R.getChar("main.min-nemonic"));
             minMI.addActionListener(new ActionListener() {
@@ -157,6 +236,8 @@ public class Main extends JFrame {
                 });
             JMenu fileM = new JMenu(R.getString("main.file")); //$NON-NLS-1$
             fileM.setMnemonic(R.getChar("main.file-nemonic"));
+            fileM.add(openMI);
+            fileM.addSeparator();
             fileM.add(minMI);
             fileM.add(quitMI);
             // ---- FILE -----------------
@@ -172,6 +253,7 @@ public class Main extends JFrame {
             JMenu editM = new JMenu(R.getString("main.edit")); //$NON-NLS-1$
             editM.setMnemonic(R.getChar("main.edit-nemonic"));
             editM.add(prefsMI);
+            editM.addSeparator();
             // ---- EDIT -----------------
             // ---- TOOLS -----------------
             JMenuItem gamesMI = new JMenuItem(R.getString("main.games")); //$NON-NLS-1$
@@ -185,6 +267,7 @@ public class Main extends JFrame {
             JMenu toolsM = new JMenu(R.getString("main.tools")); //$NON-NLS-1$
             toolsM.setMnemonic(R.getChar("main.tools-nemonic"));
             toolsM.add(gamesMI);
+            toolsM.addSeparator();
             // ---- TOOLS -----------------
             // ---- HELP -----------------
             JMenuItem helpMI = new JMenuItem(R.getString("main.help")); //$NON-NLS-1$
@@ -223,7 +306,7 @@ public class Main extends JFrame {
             panel = new JPanel(new GridBagLayout());
             GridBagConstraints c = new GridBagConstraints();
             c.fill = GridBagConstraints.HORIZONTAL;
-            c.gridy = 0; c.gridx = 0; 
+            c.gridy = 0; c.gridx = 0;
             panel.add(get_menuBar(), c);
             c.gridy = 1; c.gridx = 0; c.weightx = 1; c.gridwidth = 2;
             c.insets = new Insets(0, 0, 0, 10);//top, left, bott, right
@@ -296,6 +379,14 @@ public class Main extends JFrame {
                   || text.indexOf("%3A%2F%2F") >= 0)) { //$NON-NLS-1$
                 text = "http://" + text;    //$NON-NLS-1$
             }
+            int end = text.indexOf("&sa=");
+            if (text.startsWith("http://www.google.com/url?q=") && end > 0) {
+                text = text.replace("http://www.google.com/url?q=", "");
+                end = text.indexOf("&sa=");
+                text = text.substring(0, end);
+                browseTF.setText(text);
+            }
+
             String cmd = pManager.getBrowseCmd();
             String to = pManager.getBrowseBot();
             text = (cmd + text).trim(); //$NON-NLS-1$
@@ -361,9 +452,25 @@ public class Main extends JFrame {
     }
 
     private void addExternTab(String url) {
-        ProcessBuilder builder = new ProcessBuilder(Arrays.asList((pManager.getExternalBrowser()+" "+url).split(" "))); //$NON-NLS-1$ //$NON-NLS-2$
+        String browser = pManager.getExternalBrowser();
+        if (browser.equals("<DEFAULT>")) {
+            if (Desktop.isDesktopSupported()) {
+                try {
+                    Desktop.getDesktop().browse(new URI(url));
+                    return;
+                } catch (URISyntaxException ex) {
+                    pManager.writeLog(ex);
+                } catch (IOException ex) {
+                    pManager.writeLog(ex);
+                }
+            }
+            Notification.show(R.getString("main.error"), R.getString("main.desktop-not-supp"), Notification.ERROR_MESSAGE);
+            return;
+        }
+
+        ProcessBuilder builder = new ProcessBuilder(Arrays.asList((browser+" "+url).split(" "))); //$NON-NLS-1$ //$NON-NLS-2$
         try {
-            builder.start(); 
+            builder.start();
         } catch (IOException e) {
             pManager.writeLog(e);
         }
@@ -379,7 +486,7 @@ public class Main extends JFrame {
     //	====================== END METHODS =======================
 
     //	========================= MAIN ===========================
-    
+
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
