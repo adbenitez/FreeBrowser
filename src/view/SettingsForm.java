@@ -33,7 +33,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import adbenitez.notify.core.Notification;
+import adbenitez.notify.Notification;
 
 import controller.PManager;
 import controller.R;
@@ -43,7 +43,6 @@ public class SettingsForm extends JDialog {
     //	================= ATTRIBUTES ==============================
 
     private static final long serialVersionUID = 1L;
-    private Main parent;
     private PManager pManager;
 
     private JPanel panel;
@@ -83,7 +82,6 @@ public class SettingsForm extends JDialog {
 
     public SettingsForm (Main parent) {
         super(parent, true);
-        this.parent = parent;
         setup();
         setTitle(R.getString("sett.title"));
         pack();
@@ -445,7 +443,6 @@ public class SettingsForm extends JDialog {
         if(saveButt == null) {
             saveButt = new JButton(R.getString("sett.save"));
             saveButt.addActionListener(new ActionListener() {
-                    @Override
                     public void actionPerformed(ActionEvent ev) {
                         float op = ((Double)get_opacity_sp().getValue()).floatValue();
                         pManager.setOpacity(op);

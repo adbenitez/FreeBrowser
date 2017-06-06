@@ -5,17 +5,17 @@ CP = '.:assets/language:assets/lib/*:bin'
 
 COPY_ASSETS = mkdir dist/assets; cp -r assets/language dist/assets/language; cp -r assets/html dist/assets/html; cp -r assets/lib dist/assets/lib
 
-JAVAC = javac -source 1.5 -target 1.5 -classpath $(CP) -d bin
+JAVAC = javac -source 1.6 -target 1.6 -classpath $(CP) -d bin
 JAR = jar cvmf assets/Manifest.mf dist/$(PROYECT_NAME).jar -C bin .
 
 .PHONY: main rclass rjar mclass mjar CLEAN CLASS_CLEAN JAR_CLEAN
 
 main: mclass rclass
 
-rclass: 
-	java -cp $(CP) $(MAIN_CLASS) 
+rclass:
+	java -cp $(CP) $(MAIN_CLASS)
 
-rjar: 
+rjar:
 	cd dist;java -jar $(PROYECT_NAME).jar
 
 mjar: dist JAR_CLEAN mclass
@@ -25,7 +25,7 @@ mjar: dist JAR_CLEAN mclass
 mclass: bin CLASS_CLEAN
 	cp -r -t bin/ ./src/*
 	find bin|grep '.java'|xargs rm
-	find src|grep '.java'|xargs $(JAVAC) 
+	find src|grep '.java'|xargs $(JAVAC)
 
 CLASS_CLEAN:
 	rm -r bin/*; true

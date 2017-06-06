@@ -12,8 +12,8 @@
 
 package view;
 
-import java.awt.Dimension;
 import java.awt.Desktop;
+import java.awt.Dimension;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsDevice.WindowTranslucency;
 import java.awt.GraphicsEnvironment;
@@ -26,20 +26,20 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.io.PrintWriter;
-import java.io.FileNotFoundException;
-import java.net.MalformedURLException;
-import java.net.URLEncoder;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
+import java.net.URLEncoder;
 import java.text.MessageFormat;
+import java.util.Arrays;
 
 import javax.mail.MessagingException;
 import javax.swing.BorderFactory;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -49,9 +49,10 @@ import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
-import javax.swing.JFileChooser;
 
-import adbenitez.notify.core.Notification;
+import adbenitez.notify.Notification;
+import adbenitez.notify.Notification.MessageType;
+import adbenitez.notify.Notification.ThemeType;
 import controller.MailManager;
 import controller.PManager;
 import controller.R;
@@ -84,7 +85,7 @@ public class Main extends JFrame {
 
     private Main () {
         super();
-        Notification.setDefaultTheme(Notification.ThemeType.NONE);
+        Notification.setDefaultTheme(ThemeType.DEFAULT);
         setUndecorated(true);
         setup();
         pack();
@@ -139,7 +140,7 @@ public class Main extends JFrame {
                     pManager.writeLog(e);
                     Notification.show(R.getString("main.error"), //$NON-NLS-1$
                                       e.getMessage(),
-                                      Notification.ERROR_MESSAGE,
+                                      MessageType.ERROR,
                                       4000);
                 }
             });
@@ -208,7 +209,6 @@ public class Main extends JFrame {
             JMenuItem openMI = new JMenuItem(R.getString("main.open")); //$NON-NLS-1$
             openMI.setMnemonic(R.getChar("main.open-nemonic"));
             openMI.addActionListener(new ActionListener() {
-                    @Override
                     public void actionPerformed(ActionEvent evt) {
                         int retVal = getFileChooser().showOpenDialog(Main.this);
                         if (retVal == JFileChooser.APPROVE_OPTION) {
@@ -220,7 +220,6 @@ public class Main extends JFrame {
             JMenuItem minMI = new JMenuItem(R.getString("main.minimize")); //$NON-NLS-1$
             minMI.setMnemonic(R.getChar("main.min-nemonic"));
             minMI.addActionListener(new ActionListener() {
-                    @Override
                     public void actionPerformed(ActionEvent evt) {
                         Main.this.setExtendedState(JFrame.ICONIFIED);
                     }
@@ -228,7 +227,6 @@ public class Main extends JFrame {
             JMenuItem quitMI = new JMenuItem(R.getString("main.quit")); //$NON-NLS-1$
             quitMI.setMnemonic(R.getChar("main.quit-nemonic"));
             quitMI.addActionListener(new ActionListener() {
-                    @Override
                     public void actionPerformed(ActionEvent evt) {
                         Main.this.setVisible(false);
                         System.exit(0);
@@ -245,7 +243,6 @@ public class Main extends JFrame {
             JMenuItem prefsMI = new JMenuItem(R.getString("main.prefs")); //$NON-NLS-1$
             prefsMI.setMnemonic(R.getChar("main.prefs-nemonic"));
             prefsMI.addActionListener(new ActionListener() {
-                    @Override
                     public void actionPerformed(ActionEvent evt) {
                         settingsForm.setVisible(true);
                     }
@@ -259,7 +256,6 @@ public class Main extends JFrame {
             JMenuItem gamesMI = new JMenuItem(R.getString("main.games")); //$NON-NLS-1$
             gamesMI.setMnemonic(R.getChar("main.games-nemonic"));
             gamesMI.addActionListener(new ActionListener() {
-                    @Override
                     public void actionPerformed(ActionEvent evt) {
                         addExternTab(pManager.getGamesPage());
                     }
@@ -273,7 +269,6 @@ public class Main extends JFrame {
             JMenuItem helpMI = new JMenuItem(R.getString("main.help")); //$NON-NLS-1$
             helpMI.setMnemonic(R.getChar("main.help-nemonic"));
             helpMI.addActionListener(new ActionListener() {
-                    @Override
                     public void actionPerformed(ActionEvent evt) {
                         addExternTab(pManager.getHelpPage());
                     }
@@ -281,7 +276,6 @@ public class Main extends JFrame {
             JMenuItem aboutMI = new JMenuItem(R.getString("main.about")); //$NON-NLS-1$
             aboutMI.setMnemonic(R.getChar("main.about-nemonic"));
             aboutMI.addActionListener(new ActionListener() {
-                    @Override
                     public void actionPerformed(ActionEvent evt) {
                         addExternTab(pManager.getAboutPage());
                     }
@@ -332,11 +326,9 @@ public class Main extends JFrame {
                     }
                 });
             browseTF.addFocusListener(new FocusListener() {
-                    @Override
                     public void focusGained(FocusEvent e) {
                         browseTF.select(0, browseTF.getText().length());
                     }
-                    @Override
                     public void focusLost(FocusEvent e) {
                         browseTF.select(0, 0);
                     }
@@ -357,11 +349,9 @@ public class Main extends JFrame {
                     }
                 });
             searchTF.addFocusListener(new FocusListener() {
-                    @Override
                     public void focusGained(FocusEvent e) {
                         searchTF.select(0, searchTF.getText().length());
                     }
-                    @Override
                     public void focusLost(FocusEvent e) {
                         searchTF.select(0, 0);
                     }
@@ -426,13 +416,13 @@ public class Main extends JFrame {
                     mManager.sendMail(to, subj, body);
                     Notification.show(R.getString("main.success"), //$NON-NLS-1$
                                       R.getString("main.petition-sent"), //$NON-NLS-1$
-                                      Notification.SUCCESS_MESSAGE,
+                                      MessageType.SUCCESS,
                                       2000);
                 } catch (MessagingException e) {
                     pManager.writeLog(e);
                     Notification.show(R.getString("main.error"), //$NON-NLS-1$
                                       e.getMessage(),
-                                      Notification.ERROR_MESSAGE,
+                                      MessageType.ERROR,
                                       6000);
                     try {
                         mManager.senderConnect();
@@ -464,7 +454,7 @@ public class Main extends JFrame {
                     pManager.writeLog(ex);
                 }
             }
-            Notification.show(R.getString("main.error"), R.getString("main.desktop-not-supp"), Notification.ERROR_MESSAGE);
+            Notification.show(R.getString("main.error"), R.getString("main.desktop-not-supp"), MessageType.ERROR);
             return;
         }
 

@@ -536,7 +536,7 @@ public class PManager {
 
     public String getReceiverHost() {
         String RECEIVER_HOST = "mail."+getReceiverProtocol()+".host";
-        return prefs.getProperty(RECEIVER_HOST, "imap.example.com");
+        return prefs.getProperty(RECEIVER_HOST, R.getString("pm.imap-host"));
     }
 
     public void setReceiverHost(String host) {
@@ -546,7 +546,7 @@ public class PManager {
 
     public String getReceiverPort() {
         String RECEIVER_PORT = "mail."+getReceiverProtocol()+".port";
-        return prefs.getProperty(RECEIVER_PORT, "993");
+        return prefs.getProperty(RECEIVER_PORT, R.getString("pm.imap-port"));
     }
 
     public void setReceiverPort(String port) {
@@ -556,7 +556,7 @@ public class PManager {
 
     public String getReceiverFrom() {
         String RECEIVER_FROM = "mail."+getReceiverProtocol()+".from";
-        return prefs.getProperty(RECEIVER_FROM, user_name+"@example.com");
+        return prefs.getProperty(RECEIVER_FROM, user_name+R.getString("pm.dom"));
     }
 
     public void setReceiverFrom(String email) {
